@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HboMax — Session Restore</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+    :root {
+      --bg: #0c0c0e;
+      --surface: #131318;
+      --surface2: #1a1a22;
+      --border: #222230;
+      --accent: #9c6ad6;
+      --accent2: #5a2e9e;
+      --cyan: #a88beb;
+      --green: #00ffaa;
+      --red: #ff3d5a;
+      --text: #ffffff;
+      --muted: #c2b0e6;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Syne', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 360px;
+      min-height: 520px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Imagen de fondo de HBO Max */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url('https://img.global.news.samsung.com/es/wp-content/uploads/2021/10/HBOMax_HERO-KA_ES_SQ.jpg');
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      z-index: -2;
+    }
+
+    /* Capa de superposición ligera */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(
+        135deg, 
+        rgba(20, 10, 40, 0.4) 0%, 
+        rgba(15, 12, 30, 0.5) 50%,
+        rgba(5, 3, 10, 0.6) 100%
+      );
+      z-index: -1;
+    }
+
+    /* ── HERO SECTION ── */
+    .hero {
+      position: relative;
+      height: 120px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      backdrop-filter: blur(3px);
+      background: rgba(10, 5, 20, 0.3);
+      border-bottom: 1px solid rgba(156, 106, 214, 0.2);
+      z-index: 1;
+    }
+
+    /* Cookie SVG container */
+    .cookie-wrap {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 8px 20px rgba(156, 106, 214, 0.5));
+      animation: cookieBob 3s ease-in-out infinite;
+    }
+
+    @keyframes cookieBob {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-4px) rotate(2deg); }
+    }
+
+    .hero-text { flex: 1; z-index: 1; }
+
+    .hero-title {
+      font-family: var(--sans);
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-title span { 
+      color: #c4a0f0;
+      text-shadow: 0 0 15px rgba(179, 132, 233, 0.7);
+    }
+
+    .hero-sub {
+      font-size: 9px;
+      color: #e0d0f0;
+      margin-top: 4px;
+      line-height: 1.4;
+      max-width: 180px;
+      font-weight: 500;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-credit {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 8px;
+      color: #b8a0e0;
+      text-align: right;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      z-index: 2;
+    }
+
+    .hero-credit span {
+      color: #d4b8ff;
+      font-weight: 700;
+      font-size: 9px;
+    }
+
+    .version-tag {
+      display: inline-block;
+      background: rgba(156, 106, 214, 0.25);
+      border: 1px solid rgba(200, 160, 255, 0.4);
+      color: #e0d0ff;
+      font-size: 8px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 5px;
+      letter-spacing: 1px;
+      backdrop-filter: blur(2px);
+    }
+
+    /* ── BODY ── */
+    .body {
+      padding: 14px 14px;
+      position: relative;
+      backdrop-filter: blur(4px);
+      z-index: 1;
+    }
+
+    /* Status */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(20, 10, 40, 0.5);
+      border: 1px solid rgba(156, 106, 214, 0.3);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .pulse-ring {
+      position: relative;
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+    }
+
+    .pulse-ring .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5a4a75;
+      position: absolute;
+      top: 1px;
+      left: 1px;
+    }
+
+    .pulse-ring.active .dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .pulse-ring.active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      animation: pulseRing 1.5s ease-out infinite;
+    }
+
+    .pulse-ring.inactive .dot { background: var(--red); }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .status-info { flex: 1; }
+    .status-label { 
+      font-size: 10px; 
+      color: #d0c0e8; 
+      font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    .status-token {
+      font-size: 9px;
+      color: #b0e0ff;
+      margin-top: 2px;
+      word-break: break-all;
+      max-height: 28px;
+      overflow: hidden;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 1px dashed rgba(156, 106, 214, 0.5);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 14px;
+      background: rgba(20, 10, 40, 0.4);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .drop-zone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(156, 106, 214, 0.05));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #c4a0f0;
+      background: rgba(30, 15, 50, 0.6);
+    }
+
+    .drop-zone:hover::before, .drop-zone.dragover::before { opacity: 1; }
+
+    .drop-icon { font-size: 22px; margin-bottom: 5px; }
+    .drop-label { color: #d0c0e8; font-size: 10px; }
+    .drop-label strong { color: #e0d0ff; }
+
+    input[type="file"] { display: none; }
+
+    /* Divider */
+    .or-divider {
+      text-align: center;
+      color: #9a8ab0;
+      font-size: 9px;
+      margin-bottom: 14px;
+      position: relative;
+      letter-spacing: 1px;
+    }
+
+    .or-divider::before, .or-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 38%;
+      height: 1px;
+      background: rgba(156, 106, 214, 0.3);
+    }
+
+    .or-divider::before { left: 0; }
+    .or-divider::after { right: 0; }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      background: rgba(20, 10, 40, 0.6);
+      border: 1px solid rgba(156, 106, 214, 0.4);
+      border-radius: 10px;
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 12px 10px;
+      resize: vertical;
+      min-height: 85px;
+      max-height: 140px;
+      outline: none;
+      transition: all 0.2s;
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    textarea:focus { 
+      border-color: #c4a0f0; 
+      background: rgba(30, 15, 50, 0.7);
+      box-shadow: 0 0 0 3px rgba(156, 106, 214, 0.2);
+    }
+    textarea::placeholder { color: #9a8ab0; }
+
+    /* Parsed preview */
+    .parsed-preview {
+      background: rgba(10, 30, 20, 0.5);
+      border: 1px solid rgba(0, 255, 170, 0.3);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      display: none;
+      backdrop-filter: blur(8px);
+    }
+
+    .parsed-preview.visible { display: block; }
+
+    .parsed-preview .plabel {
+      color: #a0ffcc;
+      font-size: 9px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+    }
+
+    .parsed-preview .ptoken {
+      color: #ccffee;
+      font-size: 9px;
+      word-break: break-all;
+      max-height: 36px;
+      overflow: hidden;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1;
+      padding: 11px;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-inject {
+      background: linear-gradient(135deg, #8b5cf0, #6d28d9);
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      border: 1px solid #a78bfa;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-inject::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .btn-inject:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 6px 20px rgba(156, 106, 214, 0.5);
+      background: linear-gradient(135deg, #9b6cf0, #7c3aed);
+    }
+    .btn-inject:hover::after { opacity: 1; }
+    
+    .btn-inject:disabled {
+      background: #3a2a50;
+      color: #8a7aa0;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      border-color: #5a4a75;
+    }
+
+    .btn-clear {
+      background: rgba(40, 20, 60, 0.6);
+      color: #ff6b8a;
+      border: 1px solid rgba(255, 100, 130, 0.3);
+      flex: 0 0 auto;
+      padding: 11px 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-clear:hover { 
+      background: rgba(60, 30, 80, 0.8);
+      color: #ff8da8;
+    }
+
+    /* Browser badge */
+    .browser-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .browser-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(20, 10, 40, 0.5);
+      border: 1px solid rgba(156, 106, 214, 0.3);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 8px;
+      color: #d0c0e8;
+      backdrop-filter: blur(8px);
+    }
+
+    .browser-badge .bdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #7a5aaf;
+    }
+
+    .browser-badge.chrome .bdot  { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+    .browser-badge.firefox .bdot { background: #ff7139; box-shadow: 0 0 6px #ff7139; }
+    .browser-badge.edge .bdot    { background: #0078d4; box-shadow: 0 0 6px #0078d4; }
+    .browser-badge.opera .bdot   { background: #ff1b2d; box-shadow: 0 0 6px #ff1b2d; }
+    .browser-badge.brave .bdot   { background: #fb542b; box-shadow: 0 0 6px #fb542b; }
+
+    .browser-badge.chrome  { color: #a0e0a0; }
+    .browser-badge.firefox { color: #ffb090; }
+    .browser-badge.edge    { color: #90c0ff; }
+    .browser-badge.opera   { color: #ff9090; }
+    .browser-badge.brave   { color: #ffa070; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #00d68f;
+      color: #0c0c0e;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 30px;
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0, 214, 143, 0.4);
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #ff3d5a; color: #fff; box-shadow: 0 4px 16px rgba(255, 61, 90, 0.4); }
+
+    /* Section label */
+    .section-label {
+      font-size: 9px;
+      color: #c4a0f0;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(156, 106, 214, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-credit">By<span> @hacker056</span></div>
+
+    <!-- Cookie SVG -->
+    <div class="cookie-wrap">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+        <defs>
+          <radialGradient id="cookieBody" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#e0c0ff"/>
+            <stop offset="40%" stop-color="#a070e0"/>
+            <stop offset="100%" stop-color="#6a30b0"/>
+          </radialGradient>
+          <radialGradient id="cookieEdge" cx="50%" cy="50%" r="50%">
+            <stop offset="70%" stop-color="transparent"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0.4)"/>
+          </radialGradient>
+          <radialGradient id="chocChip1" cx="30%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#4a2080"/>
+            <stop offset="100%" stop-color="#2a1050"/>
+          </radialGradient>
+          <radialGradient id="shine" cx="35%" cy="25%" r="40%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.35)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <filter id="shadow">
+            <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="rgba(0,0,0,0.5)"/>
+          </filter>
+        </defs>
+
+        <g filter="url(#shadow)">
+          <path d="M50,8 C55,5 60,6 64,10 C68,7 73,8 75,13 C80,12 84,15 84,20 C88,22 90,27 88,32 C93,35 93,41 90,45 C94,49 93,55 90,58 C93,62 91,68 87,70 C88,75 85,80 80,81 C79,86 74,89 69,88 C66,92 61,93 57,91 C53,95 47,95 43,91 C39,93 34,92 31,88 C26,89 21,86 20,81 C15,80 12,75 13,70 C9,68 7,62 10,58 C7,55 6,49 10,45 C7,41 7,35 12,32 C10,27 12,22 16,20 C16,15 20,12 25,13 C27,8 32,7 36,10 C40,6 45,5 50,8Z" fill="url(#cookieBody)"/>
+          <path d="M50,8 C55,5 60,6 64,10 C68,7 73,8 75,13 C80,12 84,15 84,20 C88,22 90,27 88,32 C93,35 93,41 90,45 C94,49 93,55 90,58 C93,62 91,68 87,70 C88,75 85,80 80,81 C79,86 74,89 69,88 C66,92 61,93 57,91 C53,95 47,95 43,91 C39,93 34,92 31,88 C26,89 21,86 20,81 C15,80 12,75 13,70 C9,68 7,62 10,58 C7,55 6,49 10,45 C7,41 7,35 12,32 C10,27 12,22 16,20 C16,15 20,12 25,13 C27,8 32,7 36,10 C40,6 45,5 50,8Z" fill="url(#cookieEdge)"/>
+        </g>
+
+        <g stroke="#8a60c0" stroke-width="1.2" fill="none" opacity="0.5">
+          <path d="M38,30 Q42,35 38,42"/>
+          <path d="M55,25 Q58,32 54,38"/>
+          <path d="M30,52 Q36,55 32,62"/>
+          <path d="M62,55 Q65,60 60,65"/>
+          <path d="M46,58 Q50,63 47,70"/>
+        </g>
+
+        <ellipse cx="34" cy="36" rx="6" ry="5" fill="url(#chocChip1)" transform="rotate(-15,34,36)"/>
+        <ellipse cx="33" cy="34.5" rx="2.5" ry="1.5" fill="rgba(255,255,255,0.15)" transform="rotate(-15,33,34.5)"/>
+        <ellipse cx="58" cy="30" rx="5.5" ry="4.5" fill="url(#chocChip1)" transform="rotate(10,58,30)"/>
+        <ellipse cx="57" cy="28.5" rx="2" ry="1.2" fill="rgba(255,255,255,0.15)" transform="rotate(10,57,28.5)"/>
+        <ellipse cx="68" cy="52" rx="5" ry="4.5" fill="url(#chocChip1)" transform="rotate(-5,68,52)"/>
+        <ellipse cx="67" cy="50.5" rx="2" ry="1.2" fill="rgba(255,255,255,0.15)"/>
+        <ellipse cx="42" cy="62" rx="5.5" ry="4.5" fill="url(#chocChip1)" transform="rotate(20,42,62)"/>
+        <ellipse cx="41" cy="60.5" rx="2" ry="1.2" fill="rgba(255,255,255,0.15)" transform="rotate(20,41,60.5)"/>
+        <ellipse cx="58" cy="70" rx="4" ry="3.5" fill="url(#chocChip1)" transform="rotate(-10,58,70)"/>
+        <ellipse cx="57.5" cy="69" rx="1.5" ry="1" fill="rgba(255,255,255,0.15)"/>
+        <ellipse cx="26" cy="62" rx="4" ry="3.5" fill="url(#chocChip1)" transform="rotate(15,26,62)"/>
+
+        <ellipse cx="38" cy="25" rx="18" ry="12" fill="url(#shine)"/>
+
+        <path d="M78,74 Q85,78 83,85 Q79,90 74,88 Q70,86 72,80Z" fill="#0c0c0e" opacity="0.85"/>
+        <path d="M78,74 Q85,78 83,85 Q79,90 74,88 Q70,86 72,80Z" fill="#6a30b0" opacity="0.3"/>
+      </svg>
+    </div>
+
+    <div class="hero-text">
+      <div class="hero-title">Hbo<span>Max</span></div>
+      <div class="hero-sub">Restaura cookies de sesión guardadas. Compatible con cualquier dominio.</div>
+      <div class="version-tag">Team Starblack</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <div class="status-bar">
+      <div class="pulse-ring" id="pulseRing">
+        <div class="dot"></div>
+      </div>
+      <div class="status-info">
+        <div class="status-label" id="statusLabel">Sin sesión activa</div>
+        <div class="status-token" id="statusToken"></div>
+      </div>
+    </div>
+
+    <!-- Netscape Cookie File section -->
+    <div class="section-label">Netscape Cookie File</div>
+    
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">🍪</div>
+      <div class="drop-label">Suelta <strong>.txt / .cookies</strong> o <strong>haz clic para explorar</strong></div>
+    </div>
+    <input type="file" id="fileInput" accept=".txt,.cookies">
+
+    <div class="or-divider">— O PEGA EL TOKEN —</div>
+
+    <textarea id="manualInput" placeholder="Pega el contenido del archivo de cookies o el token st (eyJ...)"></textarea>
+
+    <div class="parsed-preview" id="parsedPreview">
+      <div class="plabel">✓ TOKEN DETECTADO</div>
+      <div class="ptoken" id="parsedToken"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-inject" id="btnInject" disabled>Activar</button>
+      <button class="btn-clear" id="btnClear">✕</button>
+    </div>
+
+    <div class="browser-row">
+      <div class="browser-badge" id="browserBadge">
+        <div class="bdot"></div>
+        <span id="browserName">detectando...</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

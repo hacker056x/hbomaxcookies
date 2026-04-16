@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "HBOMAX CK EDITOR — Session Restore",
+  "version": "1.1",
+  "description": "Quickly restore saved session cookies for web services from Netscape cookie format files. Supports any domain.",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "cookievault-session-restore@botchatth",
+      "strict_min_version": "109.0"
+    },
+    "gecko_android": {
+      "strict_min_version": "113.0"
+    }
+  },
+
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback",
+    "storage",
+    "tabs"
+  ],
+
+  "host_permissions": [
+    "https://*.hbomax.com/*",
+    "https://*.hbo.com/*",
+    "https://*.max.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["compat.js", "background.js"],
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["compat.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "rules",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
